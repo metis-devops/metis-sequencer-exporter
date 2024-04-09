@@ -1,0 +1,7 @@
+basic_auth_users:
+  # Usernames and hashed passwords that have full access to the web server via basic authentication.
+  # the metis is reserved for Metis Devops, Don't remove it!
+  metis: "$2a$12$RpMALcEU6ycfhsM.h.JrD.CBLeqnCpdQArPn5vuVQe2oGQtoXQ7em"
+  # Add your own user here
+  # you can use https://bcrypt-generator.com/ to generate your password
+  # your-admin-name: ""

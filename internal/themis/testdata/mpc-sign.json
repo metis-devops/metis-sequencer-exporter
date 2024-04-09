@@ -1,0 +1,13 @@
+{
+  "height": "176962",
+  "result": {
+    "sign_id": "2b92db63-0e6e-47f5-aaab-1ee76dd7668e",
+    "mpc_id": "5ca928c2-85c5-4d1a-8005-8a217eb47ab5",
+    "sign_type": 1,
+    "sign_data": "dGVzdG9ubHk=",
+    "sign_msg": "yChgW0EpOWNFhxkZRsEyyxVJYHBHEkBE1yldidQIJhw=",
+    "proposer": "0x87fb79e80599392b0069b9b472e53fd32d53a9fd",
+    "signature": "cmVkYWN0ZWQ=",
+    "signed_tx": "dGVzdG9ubHk="
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "height": "175642",
+  "result": {
+    "mpc_id": "4e83e51b-f019-4c5f-a68e-175a6afe1075",
+    "threshold": 1,
+    "participants": [
+      {
+        "id": "16Uiu2HAmAHXrEoYHBVcPcW8MkMDoVVjTvcPCPNUdzvAwUWpwL23r",
+        "moniker": "0xabb8407d97fd40410f91ae9ef80df3aa45e9affa",
+        "key": "AtzJdup4whlC5LDym/pgVFf8DjBW/ShIJ7nnEG4SSsVB"
+      },
+      {
+        "id": "16Uiu2HAmDHsXhskjkUSq1NUrW3S7CxFwuz7cMeo3HEe7BG8aGQs9",
+        "moniker": "0x87fb79e80599392b0069b9b472e53fd32d53a9fd",
+        "key": "Awlyxy8lQtjp/VqshUigshwOukrWHq5l+WR6LiAzGesg"
+      },
+      {
+        "id": "16Uiu2HAmPTogjoRusC42T7zjzVKwj4PEkbgQR2oX1m4xuu5k3oqT",
+        "moniker": "0xd0b814096cb9ca5e140a7616a2885c5abfb71bc1",
+        "key": "A6CTG9QJY0owCcHWICA/k4CcuJW1si8Srb/24U195L/y"
+      }
+    ],
+    "mpc_address": "0x48120daed4f33ad803b19e4e237c4180a4043045",
+    "mpc_pubkey": "AhvBzH3102WlwfXmg1HspPJJqre22ZUAZbNpAYjzWelo",
+    "mpc_type": 0
+  }
+}

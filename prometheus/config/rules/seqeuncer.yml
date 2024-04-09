@@ -1,0 +1,29 @@
+groups:
+  - name: metis-seq
+    interval: 1m
+    rules:
+      - alert: ChainStalled
+        expr: increase(metis:sequencer:height[3m]) == 0
+        labels:
+          severity: high
+        annotations:
+          summary: "{{ $labels.svc_name }} has no blocks generated in the past minute"
+      - alert: MPCNoSignForLong
+        expr: time() - metis:sequencer:timestamp{svc_name="mpc"} > 3600
+        labels:
+          severity: medium
+        annotations:
+          summary: "MPC has not signed in the past hour"
+      - alert: MPCSignFailure
+        expr: metis:sequencer:mpc:state == 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "MPC signing failed"
+      - alert: ScrapeFailures
+        expr: increase(metis_sequencer_exporter_failures[1m]) > 2
+        for: 3m
+        labels:
+          severity: high
+        annotations:
+          summary: "Failed to scrape metrics from {{ $labels.url }}, see the exporter log to fix it"

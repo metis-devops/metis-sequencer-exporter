@@ -1,0 +1,65 @@
+version: "3.8"
+
+services:
+  metis-sequencer-exporter:
+    image: ghcr.io/metisprotocol/metis-sequencer-exporter:main
+    restart: unless-stopped
+    pull_policy: always
+    ports:
+      - 21012:21012
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      # deploy the exporter on the same instance with your sequencer
+      - -url.state.seq
+      - http://host.docker.internal:9545/health
+      - -url.state.node
+      - http://host.docker.internal:1317/metis/latest-span
+      - -url.state.l1dtl
+      - http://host.docker.internal:7878/eth/context/latest
+  prometheus:
+    image: prom/prometheus:v2.45.2
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+    user: root
+    depends_on:
+      - metis-sequencer-exporter
+    command:
+      - --config.file=/config/prometheus.yml
+      - --web.config.file=/config/prometheus-web.yml
+      - --storage.tsdb.path=/data
+      - --storage.tsdb.retention.time=1d
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    volumes:
+      - ./config:/config:ro
+      - ./data/prometheus:/data
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    restart: unless-stopped
+    expose:
+      - 9093
+    user: root
+    command:
+      - --config.file=/config/alertmanager.yml
+      - --storage.path=/data
+    depends_on:
+      - prometheus
+    volumes:
+      - ./config:/config:ro
+      - ./data/alertmanager:/data
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    restart: unless-stopped
+    expose:
+      - 9100
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
