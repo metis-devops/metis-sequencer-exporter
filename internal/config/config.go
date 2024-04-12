@@ -16,7 +16,7 @@ type Sequencer struct {
 	L2Geth string `json:"l2geth" yaml:"l2geth"`
 }
 
-type Balance struct {
+type Wallet struct {
 	Themis  string                    `json:"themis,omitempty" yaml:"themis,omitempty"`
 	L2Geth  string                    `json:"l2geth" yaml:"l2geth"`
 	L1Geth  string                    `json:"l1geth" yaml:"l1geth"`
@@ -25,7 +25,7 @@ type Balance struct {
 
 type Config struct {
 	Sequencers map[string]*Sequencer `json:"sequencer" yaml:"sequencer"`
-	Balance    *Balance              `json:"balance" yaml:"balance"`
+	Wallet     *Wallet               `json:"wallet" yaml:"wallet"`
 }
 
 func Parse(p string) (*Config, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"sync"
 	"time"
 
@@ -27,11 +28,14 @@ type SequencerMetric struct {
 	clients    map[string]*SequencerClient
 	timestamps *prometheus.CounterVec
 	heights    *prometheus.CounterVec
+	logger     *slog.Logger
 }
 
 func NewSeqMetric(basectx context.Context, reg prometheus.Registerer, conf *config.Config) (*SequencerMetric, error) {
 	ctx, cancel := context.WithTimeout(basectx, time.Minute)
 	defer cancel()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil)).With("module", "sequencer")
 
 	var clients = make(map[string]*SequencerClient)
 	for name, ep := range conf.Sequencers {
@@ -41,23 +45,26 @@ func NewSeqMetric(basectx context.Context, reg prometheus.Registerer, conf *conf
 		}
 
 		var err error
+		logger.Info("connect to l2geth %s of %s", ep.L2Geth, name)
 		client.l2rpc, err = ethclient.DialContext(ctx, ep.L2Geth)
 		if err != nil {
 			return nil, fmt.Errorf("connect to l2geth %s of %s", ep.L2Geth, name)
 		}
 
 		if ep.L1DTL != "" {
+			logger.Info("connect to l1dtl %s of %s", ep.L1DTL, name)
 			client.dtl, err = dtl.NewClient(ep.L1DTL)
 			if err != nil {
-				return nil, fmt.Errorf("connect to l2geth %s of %s", ep.L2Geth, name)
+				return nil, fmt.Errorf("connect to l1dtl %s of %s", ep.L1DTL, name)
 
 			}
 		}
 
 		if ep.Themis != "" {
+			logger.Info("connect to themis %s of %s", ep.Themis, name)
 			client.themis, err = themis.NewClient(ep.Themis)
 			if err != nil {
-				return nil, fmt.Errorf("connect to l2geth %s of %s", ep.L2Geth, name)
+				return nil, fmt.Errorf("connect to themis %s of %s", ep.Themis, name)
 			}
 		}
 
@@ -80,6 +87,7 @@ func NewSeqMetric(basectx context.Context, reg prometheus.Registerer, conf *conf
 			},
 			[]string{"svc_name", "seq_name"},
 		),
+		logger: logger,
 	}
 
 	reg.MustRegister(m.timestamps)
@@ -106,7 +114,7 @@ func (m *SequencerMetric) scrapeL2gethMetrics(basectx context.Context, failureCo
 			return fmt.Errorf("failed to get l2 height: %s", err)
 		}
 
-		slog.Info("l2geth", "name", name, "height", header.Number, "timestamp", header.Time)
+		m.logger.Info("l2geth", "name", name, "height", header.Number, "timestamp", header.Time)
 
 		client.mutex.Lock()
 		defer client.mutex.Unlock()
@@ -137,13 +145,13 @@ func (m *SequencerMetric) scrapeL2gethMetrics(basectx context.Context, failureCo
 				go func() {
 					if err := scrape(name, client); err != nil {
 						failureCounter.With(prometheus.Labels{"svc_name": fmt.Sprintf("seq-%s-l2geth", name)}).Inc()
-						slog.Error("scrape l2geth metrics", "seq", name, "err", err)
+						m.logger.Error("scrape l2geth metrics", "seq", name, "err", err)
 					}
 					wg.Done()
 				}()
 			}
 			wg.Wait()
-			slog.Info("Done", "target", "l2geth", "duration", time.Since(start))
+			m.logger.Info("Done", "target", "l2geth", "duration", time.Since(start))
 			ticker.Reset(scrapeInterval)
 		}
 	}
@@ -158,7 +166,7 @@ func (m *SequencerMetric) scrapeThemisMetrics(basectx context.Context, failureCo
 		}
 		return false
 	}(); !enabled {
-		slog.Warn("PoS metric is disabled")
+		m.logger.Warn("PoS metric is disabled")
 		return
 	}
 
@@ -178,7 +186,7 @@ func (m *SequencerMetric) scrapeThemisMetrics(basectx context.Context, failureCo
 			return fmt.Errorf("failed to get epoch info: %s", err)
 		}
 
-		slog.Info("themis", "name", name, "height", height, "span", epoch.ID)
+		m.logger.Info("themis", "name", name, "height", height, "span", epoch.ID)
 
 		client.mutex.Lock()
 		defer client.mutex.Unlock()
@@ -204,13 +212,13 @@ func (m *SequencerMetric) scrapeThemisMetrics(basectx context.Context, failureCo
 				go func() {
 					if err := scrape(name, client); err != nil {
 						failureCounter.With(prometheus.Labels{"svc_name": fmt.Sprintf("seq-%s-themis", name)}).Inc()
-						slog.Error("scrape themis metrics", "seq", name, "err", err)
+						m.logger.Error("scrape themis metrics", "seq", name, "err", err)
 					}
 					wg.Done()
 				}()
 			}
 			wg.Wait()
-			slog.Info("Done", "target", "themis", "duration", time.Since(start))
+			m.logger.Info("Done", "target", "themis", "duration", time.Since(start))
 			ticker.Reset(scrapeInterval)
 		}
 	}
@@ -225,7 +233,7 @@ func (m *SequencerMetric) scrapeL1DTLMetrics(basectx context.Context, failureCou
 		}
 		return false
 	}(); !enabled {
-		slog.Warn("DTL metric is disabled")
+		m.logger.Warn("DTL metric is disabled")
 		return
 	}
 
@@ -245,7 +253,7 @@ func (m *SequencerMetric) scrapeL1DTLMetrics(basectx context.Context, failureCou
 			return fmt.Errorf("failed to l1dtl status: %s", err)
 		}
 
-		slog.Info("l1dtl", "name", name, "height", height)
+		m.logger.Info("l1dtl", "name", name, "height", height)
 
 		client.mutex.Lock()
 		defer client.mutex.Unlock()
@@ -271,13 +279,13 @@ func (m *SequencerMetric) scrapeL1DTLMetrics(basectx context.Context, failureCou
 				go func() {
 					if err := scrape(name, client); err != nil {
 						failureCounter.With(prometheus.Labels{"svc_name": fmt.Sprintf("seq-%s-l1dtl", name)}).Inc()
-						slog.Error("scrape l1dtl metrics", "seq", name, "err", err)
+						m.logger.Error("scrape l1dtl metrics", "seq", name, "err", err)
 					}
 					wg.Done()
 				}()
 			}
 			wg.Wait()
-			slog.Info("Done", "target", "l1dtl", "duration", time.Since(start))
+			m.logger.Info("Done", "target", "l1dtl", "duration", time.Since(start))
 			ticker.Reset(scrapeInterval)
 		}
 	}

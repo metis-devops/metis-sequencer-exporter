@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"os"
 	"sync"
 	"time"
 
@@ -26,38 +27,43 @@ type WalletMetric struct {
 
 	mutex    sync.Mutex
 	nonceMap map[string]float64
+	logger   *slog.Logger
 }
 
 func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *config.Config) (*WalletMetric, error) {
-	if conf.Balance == nil {
+	if conf.Wallet == nil {
 		return nil, nil
 	}
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil)).With("module", "wallet")
 	ctx, cancel := context.WithTimeout(basectx, time.Minute)
 	defer cancel()
 
-	l2rpc, err := ethclient.DialContext(ctx, conf.Balance.L2Geth)
+	logger.Info("connect to l2geth", "url", conf.Wallet.L2Geth)
+	l2rpc, err := ethclient.DialContext(ctx, conf.Wallet.L2Geth)
 	if err != nil {
-		return nil, fmt.Errorf("connect to l2geth %s", conf.Balance.L2Geth)
+		return nil, fmt.Errorf("connect to l2geth %s", conf.Wallet.L2Geth)
 	}
 
-	l1rpc, err := ethclient.DialContext(ctx, conf.Balance.L1Geth)
+	logger.Info("connect to l1geth", "url", conf.Wallet.L1Geth)
+	l1rpc, err := ethclient.DialContext(ctx, conf.Wallet.L1Geth)
 	if err != nil {
-		return nil, fmt.Errorf("connect to l1geth %s", conf.Balance.L1Geth)
+		return nil, fmt.Errorf("connect to l1geth %s", conf.Wallet.L1Geth)
 	}
 
 	wallets := make(map[string]common.Address)
-	maps.Copy(conf.Balance.Wallets, wallets)
+	maps.Copy(conf.Wallet.Wallets, wallets)
 
-	if conf.Balance.Themis == "" {
-		slog.Warn("mpc wallet metric is disabled")
-		if len(conf.Balance.Wallets) == 0 {
+	if conf.Wallet.Themis == "" {
+		logger.Warn("mpc wallet metric is disabled")
+		if len(conf.Wallet.Wallets) == 0 {
 			return nil, nil
 		}
 	} else {
-		pos, err := themis.NewClient(conf.Balance.Themis)
+		logger.Info("connect to themis", "url", conf.Wallet.Themis)
+		pos, err := themis.NewClient(conf.Wallet.Themis)
 		if err != nil {
-			return nil, fmt.Errorf("connect to themis %s", conf.Balance.L1Geth)
+			return nil, fmt.Errorf("connect to themis %s", conf.Wallet.L1Geth)
 		}
 		for i := themis.CommonMpcAddr; i <= themis.RewardSubmitMpcAddr; i++ {
 			res, err := pos.LatestMpcInfo(ctx, i)
@@ -92,6 +98,7 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 		balance:  balance,
 		nonce:    nonce,
 		nonceMap: make(map[string]float64),
+		logger:   logger,
 	}, nil
 }
 
@@ -100,8 +107,8 @@ func (m *WalletMetric) Scrape(basectx context.Context, failureCounter *prometheu
 		slog.Warn("wallet metric is disabled")
 		return
 	}
-	m.scrapeL2(basectx, failureCounter, scrapeInterval)
-	m.scrapeL1(basectx, failureCounter, scrapeInterval)
+	go m.scrapeL2(basectx, failureCounter, scrapeInterval)
+	go m.scrapeL1(basectx, failureCounter, scrapeInterval)
 }
 
 func (m *WalletMetric) scrapeL2(basectx context.Context, failureCounter *prometheus.CounterVec, scrapeInterval time.Duration) {
@@ -126,7 +133,7 @@ func (m *WalletMetric) scrapeL2(basectx context.Context, failureCounter *prometh
 			return fmt.Errorf("failed to get l2 nonce: %s", err)
 		}
 
-		slog.Info("wallet", "chain", "metis", "alias", name, "addr", addr, "balance", balance, "nonce", nonce)
+		m.logger.Info("wallet", "chain", "metis", "alias", name, "addr", addr, "balance", balance, "nonce", nonce)
 
 		m.balance.With(labels).Set(balance)
 
@@ -152,13 +159,13 @@ func (m *WalletMetric) scrapeL2(basectx context.Context, failureCounter *prometh
 				go func() {
 					if err := scrape(name, addr); err != nil {
 						failureCounter.With(prometheus.Labels{"svc_name": "metis_balance"}).Inc()
-						slog.Error("scrape metis wallet metrics", "addr", name, "err", err)
+						m.logger.Error("scrape metis wallet metrics", "addr", name, "err", err)
 					}
 					wg.Done()
 				}()
 			}
 			wg.Wait()
-			slog.Info("Done", "target", "metis_wallet", "duration", time.Since(start))
+			m.logger.Info("Done", "target", "metis_wallet", "duration", time.Since(start))
 			ticker.Reset(scrapeInterval)
 		}
 	}
@@ -186,7 +193,7 @@ func (m *WalletMetric) scrapeL1(basectx context.Context, failureCounter *prometh
 			return fmt.Errorf("failed to get l1 nonce: %s", err)
 		}
 
-		slog.Info("wallet", "chain", "eth", "alias", name, "addr", addr, "balance", balance, "nonce", nonce)
+		m.logger.Info("wallet", "chain", "eth", "alias", name, "addr", addr, "balance", balance, "nonce", nonce)
 
 		m.balance.With(labels).Set(balance)
 
@@ -212,13 +219,13 @@ func (m *WalletMetric) scrapeL1(basectx context.Context, failureCounter *prometh
 				go func() {
 					if err := scrape(alias, addr); err != nil {
 						failureCounter.With(prometheus.Labels{"svc_name": "eth_balance"}).Inc()
-						slog.Error("scrape eth wallet metrics", "alias", alias, "err", err)
+						m.logger.Error("scrape eth wallet metrics", "alias", alias, "err", err)
 					}
 					wg.Done()
 				}()
 			}
 			wg.Wait()
-			slog.Info("Done", "target", "eth_wallet", "duration", time.Since(start))
+			m.logger.Info("Done", "target", "eth_wallet", "duration", time.Since(start))
 			ticker.Reset(scrapeInterval)
 		}
 	}
