@@ -43,20 +43,21 @@ func NewSeqMetric(basectx context.Context, reg prometheus.Registerer, conf *conf
 		var err error
 		client.l2rpc, err = ethclient.DialContext(ctx, ep.L2Geth)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("connect to l2geth %s of %s", ep.L2Geth, name)
 		}
 
 		if ep.L1DTL != "" {
 			client.dtl, err = dtl.NewClient(ep.L1DTL)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("connect to l2geth %s of %s", ep.L2Geth, name)
+
 			}
 		}
 
 		if ep.Themis != "" {
 			client.themis, err = themis.NewClient(ep.Themis)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("connect to l2geth %s of %s", ep.L2Geth, name)
 			}
 		}
 

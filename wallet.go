@@ -38,12 +38,12 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 
 	l2rpc, err := ethclient.DialContext(ctx, conf.Balance.L2Geth)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connect to l2geth %s", conf.Balance.L2Geth)
 	}
 
 	l1rpc, err := ethclient.DialContext(ctx, conf.Balance.L1Geth)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connect to l1geth %s", conf.Balance.L1Geth)
 	}
 
 	wallets := make(map[string]common.Address)
@@ -57,7 +57,7 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 	} else {
 		pos, err := themis.NewClient(conf.Balance.Themis)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("connect to themis %s", conf.Balance.L1Geth)
 		}
 		for i := themis.CommonMpcAddr; i <= themis.RewardSubmitMpcAddr; i++ {
 			res, err := pos.LatestMpcInfo(ctx, i)
