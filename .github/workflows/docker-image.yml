@@ -3,7 +3,8 @@ name: docker
 on:
   push:
     paths-ignore:
-      - ".github"
+      - ".github/**"
+      - "protmeheus/**"
     branches:
       - "main"
     tags:
