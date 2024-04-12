@@ -17,7 +17,7 @@ type Sequencer struct {
 }
 
 type Balance struct {
-	Themis  string                    `json:"themis" yaml:"themis"`
+	Themis  string                    `json:"themis,omitempty" yaml:"themis,omitempty"`
 	L2Geth  string                    `json:"l2geth" yaml:"l2geth"`
 	L1Geth  string                    `json:"l1geth" yaml:"l1geth"`
 	Wallets map[string]common.Address `json:"wallets" yaml:"wallets"`

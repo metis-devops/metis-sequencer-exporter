@@ -37,13 +37,13 @@ func main() {
 
 	reg := prometheus.NewRegistry()
 
-	seq, err := NewSeqMetric(basectx, reg, conf)
+	seqMetric, err := NewSeqMetric(basectx, reg, conf)
 	if err != nil {
 		slog.Error("NewSeqMetrics", "err", err)
 		os.Exit(1)
 	}
 
-	bal, err := NewBalanceMetric(basectx, reg, conf)
+	walletMetric, err := NewWalletMetric(basectx, reg, conf)
 	if err != nil {
 		slog.Error("NewBalanceMetric", "err", err)
 		os.Exit(1)
@@ -58,15 +58,15 @@ func main() {
 	)
 	reg.MustRegister(scrapeFailuresMetric)
 
-	go seq.Scrape(basectx, scrapeFailuresMetric, ScrapeInterval)
-	go bal.Scrape(basectx, scrapeFailuresMetric, ScrapeInterval)
+	go seqMetric.Scrape(basectx, scrapeFailuresMetric, ScrapeInterval)
+	go walletMetric.Scrape(basectx, scrapeFailuresMetric, ScrapeInterval)
 
 	server := &http.Server{Addr: ":9090"}
 	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "pong") })
 
 	go func() {
-		slog.Info("serving")
+		slog.Info("ListenAndServing")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			cancel()
 			slog.Error("ListenAndServe", "err", err)
