@@ -18,11 +18,14 @@ import (
 
 func main() {
 	var (
-		ScrapeInterval time.Duration
-		ConfPath       string
+		ConfPath string
+
+		SequencerScrapeInterval time.Duration
+		WalletScrapeInterval    time.Duration
 	)
 
-	flag.DurationVar(&ScrapeInterval, "scrape.interval", time.Second*15, "scrape interval")
+	flag.DurationVar(&SequencerScrapeInterval, "interval.sequencer", time.Second*15, "scrape interval")
+	flag.DurationVar(&WalletScrapeInterval, "interval.wallet", time.Minute, "scrape interval")
 	flag.StringVar(&ConfPath, "config", "config.yaml", "config path")
 	flag.Parse()
 
@@ -58,8 +61,8 @@ func main() {
 	)
 	reg.MustRegister(scrapeFailuresMetric)
 
-	go seqMetric.Scrape(basectx, scrapeFailuresMetric, ScrapeInterval)
-	go walletMetric.Scrape(basectx, scrapeFailuresMetric, ScrapeInterval)
+	go seqMetric.Scrape(basectx, scrapeFailuresMetric, SequencerScrapeInterval)
+	go walletMetric.Scrape(basectx, scrapeFailuresMetric, WalletScrapeInterval)
 
 	server := &http.Server{Addr: ":9090"}
 	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
