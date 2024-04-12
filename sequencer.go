@@ -45,14 +45,14 @@ func NewSeqMetric(basectx context.Context, reg prometheus.Registerer, conf *conf
 		}
 
 		var err error
-		logger.Info("connect to l2geth %s of %s", ep.L2Geth, name)
+		logger.Info("connect to l2geth", "name", name, "url", ep.L2Geth)
 		client.l2rpc, err = ethclient.DialContext(ctx, ep.L2Geth)
 		if err != nil {
 			return nil, fmt.Errorf("connect to l2geth %s of %s", ep.L2Geth, name)
 		}
 
 		if ep.L1DTL != "" {
-			logger.Info("connect to l1dtl %s of %s", ep.L1DTL, name)
+			logger.Info("connect to l1dtl", "name", name, "url", ep.L1DTL)
 			client.dtl, err = dtl.NewClient(ep.L1DTL)
 			if err != nil {
 				return nil, fmt.Errorf("connect to l1dtl %s of %s", ep.L1DTL, name)
@@ -61,7 +61,7 @@ func NewSeqMetric(basectx context.Context, reg prometheus.Registerer, conf *conf
 		}
 
 		if ep.Themis != "" {
-			logger.Info("connect to themis %s of %s", ep.Themis, name)
+			logger.Info("connect to themis", "name", name, "url", ep.Themis)
 			client.themis, err = themis.NewClient(ep.Themis)
 			if err != nil {
 				return nil, fmt.Errorf("connect to themis %s of %s", ep.Themis, name)
@@ -90,8 +90,7 @@ func NewSeqMetric(basectx context.Context, reg prometheus.Registerer, conf *conf
 		logger: logger,
 	}
 
-	reg.MustRegister(m.timestamps)
-	reg.MustRegister(m.heights)
+	reg.MustRegister(m.timestamps, m.heights)
 	return m, nil
 }
 
