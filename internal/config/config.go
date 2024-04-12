@@ -11,8 +11,8 @@ import (
 )
 
 type Sequencer struct {
-	L1DTL  string `json:"l1dtl" yaml:"l1dtl"`
-	Themis string `json:"themis" yaml:"themis"`
+	L1DTL  string `json:"l1dtl,omitempty" yaml:"l1dtl,omitempty"`
+	Themis string `json:"themis,omitempty" yaml:"themis,omitempty"`
 	L2Geth string `json:"l2geth" yaml:"l2geth"`
 }
 
@@ -25,7 +25,7 @@ type Wallet struct {
 
 type Config struct {
 	Sequencers map[string]*Sequencer `json:"sequencer" yaml:"sequencer"`
-	Wallet     *Wallet               `json:"wallet" yaml:"wallet"`
+	Wallet     *Wallet               `json:"wallet,omitempty" yaml:"wallet,omitempty"`
 }
 
 func Parse(p string) (*Config, error) {
