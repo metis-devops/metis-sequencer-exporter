@@ -52,7 +52,7 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 	}
 
 	wallets := make(map[string]common.Address)
-	maps.Copy(conf.Wallet.Wallets, wallets)
+	maps.Copy(wallets, conf.Wallet.Wallets)
 
 	if conf.Wallet.Themis == "" {
 		logger.Warn("mpc wallet metric is disabled")
