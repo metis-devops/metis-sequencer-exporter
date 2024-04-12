@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"maps"
 	"os"
 	"sync"
 	"time"
@@ -52,7 +51,10 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 	}
 
 	wallets := make(map[string]common.Address)
-	maps.Copy(wallets, conf.Wallet.Wallets)
+	for name, wallet := range conf.Wallet.Wallets {
+		wallets[name] = wallet
+		logger.Info("Add custom wallet", "name", name, "wallet", wallet)
+	}
 
 	if conf.Wallet.Themis == "" {
 		logger.Warn("mpc wallet metric is disabled")
@@ -124,13 +126,13 @@ func (m *WalletMetric) scrapeL2(basectx context.Context, failureCounter *prometh
 
 		wei, err := m.l2rpc.BalanceAt(newctx, addr, nil)
 		if err != nil {
-			return fmt.Errorf("failed to get l2 balance: %s", err)
+			return fmt.Errorf("failed to get balance: %s", err)
 		}
 		balance := utils.ToEther(wei)
 
 		nonce, err := m.l2rpc.NonceAt(newctx, addr, nil)
 		if err != nil {
-			return fmt.Errorf("failed to get l2 nonce: %s", err)
+			return fmt.Errorf("failed to get nonce: %s", err)
 		}
 
 		m.logger.Info("wallet", "chain", "metis", "alias", name, "addr", addr, "balance", balance, "nonce", nonce)
@@ -139,7 +141,10 @@ func (m *WalletMetric) scrapeL2(basectx context.Context, failureCounter *prometh
 
 		m.mutex.Lock()
 		defer m.mutex.Unlock()
-		if t := m.nonceMap[nonceKey] - float64(nonce); t > 0 {
+		if v, ok := m.nonceMap[nonceKey]; !ok && nonce == 0 {
+			m.nonce.With(labels).Add(0)
+			m.nonceMap[nonceKey] = 0
+		} else if t := float64(nonce) - v; t > 0 {
 			m.nonce.With(labels).Add(t)
 			m.nonceMap[nonceKey] += t
 		}
@@ -184,13 +189,13 @@ func (m *WalletMetric) scrapeL1(basectx context.Context, failureCounter *prometh
 
 		wei, err := m.l1rpc.BalanceAt(newctx, addr, nil)
 		if err != nil {
-			return fmt.Errorf("failed to get l1 balance: %s", err)
+			return fmt.Errorf("failed to get balance: %s", err)
 		}
 		balance := utils.ToEther(wei)
 
 		nonce, err := m.l2rpc.NonceAt(newctx, addr, nil)
 		if err != nil {
-			return fmt.Errorf("failed to get l1 nonce: %s", err)
+			return fmt.Errorf("failed to get nonce: %s", err)
 		}
 
 		m.logger.Info("wallet", "chain", "eth", "alias", name, "addr", addr, "balance", balance, "nonce", nonce)
@@ -199,7 +204,10 @@ func (m *WalletMetric) scrapeL1(basectx context.Context, failureCounter *prometh
 
 		m.mutex.Lock()
 		defer m.mutex.Unlock()
-		if t := m.nonceMap[nonceKey] - float64(nonce); t > 0 {
+		if v, ok := m.nonceMap[nonceKey]; !ok && nonce == 0 {
+			m.nonce.With(labels).Add(0)
+			m.nonceMap[nonceKey] = 0
+		} else if t := float64(nonce) - v; t > 0 {
 			m.nonce.With(labels).Add(t)
 			m.nonceMap[nonceKey] += t
 		}
