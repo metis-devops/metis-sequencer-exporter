@@ -193,7 +193,7 @@ func (m *WalletMetric) scrapeL1(basectx context.Context, failureCounter *prometh
 		}
 		balance := utils.ToEther(wei)
 
-		nonce, err := m.l2rpc.NonceAt(newctx, addr, nil)
+		nonce, err := m.l1rpc.NonceAt(newctx, addr, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get nonce: %s", err)
 		}
