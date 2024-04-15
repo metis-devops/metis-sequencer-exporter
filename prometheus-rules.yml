@@ -1,13 +1,20 @@
+# yaml-language-server: $schema=https://json.schemastore.org/prometheus.rules.json
 groups:
   - name: metis-seq
-    interval: 15s
+    interval: 1m
     rules:
       - alert: ChainStalled
-        expr: increase(metis:sequencer:height[1m]) == 0
+        expr: increase(metis:sequencer:height[2m]) == 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.svc_name }} of {{ $labels.seq_name }} is has no new blocks in the past minute"
+      - alert: SeqseqMPCAddrBalanceInsufficient
+        expr: metis:sequencer:wallet:balance{chain='metis',alias='CommonMpcAddr'} < 3
         labels:
           severity: high
         annotations:
-          summary: "{{ $labels.svc_name }} of {{ $labels.seq_name }} is has no new blocks in the past minute"
+          summary: "The balance of MPC address for SeqSet is less than 3"
       - alert: ScrapeFailures
         expr: increase(metis_sequencer_exporter_failures[1m]) > 2
         for: 3m
