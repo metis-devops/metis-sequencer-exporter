@@ -31,6 +31,11 @@ func main() {
 	flag.Uint64Var(&Port, "port", 9090, "the listening port")
 	flag.Parse()
 
+	if Port > 65535 {
+		slog.Error("invalid port", "port", Port)
+		return
+	}
+
 	conf, err := config.Parse(ConfPath)
 	if err != nil {
 		slog.Error("config", "path", ConfPath, "err", err)
