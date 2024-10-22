@@ -19,6 +19,7 @@ import (
 func main() {
 	var (
 		ConfPath string
+		Port     uint64
 
 		SequencerScrapeInterval time.Duration
 		WalletScrapeInterval    time.Duration
@@ -27,6 +28,7 @@ func main() {
 	flag.DurationVar(&SequencerScrapeInterval, "interval.sequencer", time.Second*15, "scrape interval")
 	flag.DurationVar(&WalletScrapeInterval, "interval.wallet", time.Minute, "scrape interval")
 	flag.StringVar(&ConfPath, "config", "config.yaml", "config path")
+	flag.Uint64Var(&Port, "port", 9090, "the listening port")
 	flag.Parse()
 
 	conf, err := config.Parse(ConfPath)
@@ -64,7 +66,7 @@ func main() {
 	go seqMetric.Scrape(basectx, scrapeFailuresMetric, SequencerScrapeInterval)
 	go walletMetric.Scrape(basectx, scrapeFailuresMetric, WalletScrapeInterval)
 
-	server := &http.Server{Addr: ":9090"}
+	server := &http.Server{Addr: fmt.Sprintf(":%d", Port)}
 	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "pong") })
 
