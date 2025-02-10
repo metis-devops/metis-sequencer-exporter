@@ -82,6 +82,11 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 		}
 	}
 
+	// mpc address length is 3 at least
+	if len(wallets) == len(conf.Wallet.Wallets)+3 {
+		return nil, fmt.Errorf("no mpc wallet address found")
+	}
+
 	balance := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "metis:sequencer:wallet:balance",
 		Help: "Balance of mpc and custom addresses from config",
