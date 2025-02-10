@@ -67,7 +67,7 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 		if err != nil {
 			return nil, fmt.Errorf("connect to themis %s", conf.Wallet.L1Geth)
 		}
-		for i := themis.CommonMpcAddr; i <= themis.RewardSubmitMpcAddr; i++ {
+		for i := themis.CommonMpcAddr; i <= themis.BlobSubmitMpcAddr; i++ {
 			res, err := pos.LatestMpcInfo(ctx, i)
 			if err != nil {
 				return nil, fmt.Errorf("get mpc address %s: %w", i, err)

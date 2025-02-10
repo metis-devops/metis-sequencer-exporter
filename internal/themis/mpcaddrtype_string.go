@@ -11,11 +11,12 @@ func _() {
 	_ = x[CommonMpcAddr-0]
 	_ = x[StateSubmitMpcAddr-1]
 	_ = x[RewardSubmitMpcAddr-2]
+	_ = x[BlobSubmitMpcAddr-3]
 }
 
-const _MpcAddrType_name = "CommonMpcAddrStateSubmitMpcAddrRewardSubmitMpcAddr"
+const _MpcAddrType_name = "CommonMpcAddrStateSubmitMpcAddrRewardSubmitMpcAddrBlobSubmitMpcAddr"
 
-var _MpcAddrType_index = [...]uint8{0, 13, 31, 50}
+var _MpcAddrType_index = [...]uint8{0, 13, 31, 50, 67}
 
 func (i MpcAddrType) String() string {
 	if i >= MpcAddrType(len(_MpcAddrType_index)-1) {
