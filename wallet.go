@@ -117,6 +117,7 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 		l1rpc:     l1rpc,
 		l2rpc:     l2rpc,
 		l1Wallets: l1Wallets,
+		l2Wallets: l2Wallets,
 		balance:   balance,
 		nonce:     nonce,
 		nonceMap:  make(map[string]float64),
