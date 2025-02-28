@@ -36,6 +36,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
+          context: .
           tags: ${{ steps.docker-meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
