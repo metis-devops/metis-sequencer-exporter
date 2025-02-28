@@ -17,9 +17,10 @@ import (
 )
 
 type WalletMetric struct {
-	l1rpc   *ethclient.Client
-	l2rpc   *ethclient.Client
-	wallets map[string]common.Address
+	l1rpc     *ethclient.Client
+	l2rpc     *ethclient.Client
+	l1Wallets map[string]common.Address
+	l2Wallets map[string]common.Address
 
 	balance *prometheus.GaugeVec
 	nonce   *prometheus.CounterVec
@@ -50,10 +51,16 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 		return nil, fmt.Errorf("connect to l1geth %s", conf.Wallet.L1Geth)
 	}
 
-	wallets := make(map[string]common.Address)
+	l1Wallets := make(map[string]common.Address)
 	for name, wallet := range conf.Wallet.Wallets {
-		wallets[name] = wallet
-		logger.Info("Add custom wallet", "name", name, "wallet", wallet)
+		l1Wallets[name] = wallet
+		logger.Info("Add custom L1 wallet", "name", name, "wallet", wallet)
+	}
+
+	l2Wallets := make(map[string]common.Address)
+	for name, wallet := range conf.Wallet.L2Wallets {
+		l2Wallets[name] = wallet
+		logger.Info("Add custom L2 wallet", "name", name, "wallet", wallet)
 	}
 
 	if conf.Wallet.Themis == "" {
@@ -67,6 +74,7 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 		if err != nil {
 			return nil, fmt.Errorf("connect to themis %s", conf.Wallet.L1Geth)
 		}
+		// todo(ericlee42): remove StateSubmitMpcAddr and don't disregard the error
 		for i := themis.CommonMpcAddr; i <= themis.BlobSubmitMpcAddr; i++ {
 			res, err := pos.LatestMpcInfo(ctx, i)
 			if err != nil {
@@ -74,16 +82,22 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 				continue
 			}
 
-			if _, ok := wallets[i.String()]; ok {
+			if _, ok := l1Wallets[i.String()]; ok {
 				return nil, fmt.Errorf("custom wallet is duplicated with mpc address %s", i)
 			}
-
-			wallets[i.String()] = res.Address
+			switch i {
+			case themis.CommonMpcAddr:
+				l1Wallets[i.String()] = res.Address
+				l2Wallets[i.String()] = res.Address
+			case themis.StateSubmitMpcAddr, themis.RewardSubmitMpcAddr, themis.BlobSubmitMpcAddr:
+				l1Wallets[i.String()] = res.Address
+			}
 		}
 	}
 
 	// mpc address length is 3 at least
-	if len(wallets) == len(conf.Wallet.Wallets)+3 {
+	// todo: remove it
+	if len(l1Wallets) == len(conf.Wallet.Wallets)+len(conf.Wallet.L2Wallets)+3 {
 		return nil, fmt.Errorf("no mpc wallet address found")
 	}
 
@@ -100,13 +114,13 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 	reg.MustRegister(balance, nonce)
 
 	return &WalletMetric{
-		l1rpc:    l1rpc,
-		l2rpc:    l2rpc,
-		wallets:  wallets,
-		balance:  balance,
-		nonce:    nonce,
-		nonceMap: make(map[string]float64),
-		logger:   logger,
+		l1rpc:     l1rpc,
+		l2rpc:     l2rpc,
+		l1Wallets: l1Wallets,
+		balance:   balance,
+		nonce:     nonce,
+		nonceMap:  make(map[string]float64),
+		logger:    logger,
 	}, nil
 }
 
@@ -164,7 +178,7 @@ func (m *WalletMetric) scrapeL2(basectx context.Context, failureCounter *prometh
 		case <-ticker.C:
 			var wg sync.WaitGroup
 			var start = time.Now()
-			for name, addr := range m.wallets {
+			for name, addr := range m.l1Wallets {
 				wg.Add(1)
 				name, addr := name, addr
 				go func() {
@@ -227,7 +241,7 @@ func (m *WalletMetric) scrapeL1(basectx context.Context, failureCounter *prometh
 		case <-ticker.C:
 			var wg sync.WaitGroup
 			var start = time.Now()
-			for alias, addr := range m.wallets {
+			for alias, addr := range m.l2Wallets {
 				wg.Add(1)
 				alias, addr := alias, addr
 				go func() {

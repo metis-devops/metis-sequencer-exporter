@@ -17,10 +17,11 @@ type Sequencer struct {
 }
 
 type Wallet struct {
-	Themis  string                    `json:"themis,omitempty" yaml:"themis,omitempty"`
-	L2Geth  string                    `json:"l2geth" yaml:"l2geth"`
-	L1Geth  string                    `json:"l1geth" yaml:"l1geth"`
-	Wallets map[string]common.Address `json:"wallets" yaml:"wallets"`
+	Themis    string                    `json:"themis,omitempty" yaml:"themis,omitempty"`
+	L2Geth    string                    `json:"l2geth" yaml:"l2geth"`
+	L1Geth    string                    `json:"l1geth" yaml:"l1geth"`
+	Wallets   map[string]common.Address `json:"wallets" yaml:"wallets"`
+	L2Wallets map[string]common.Address `json:"l2_wallets" yaml:"l2_wallets"`
 }
 
 type Config struct {
