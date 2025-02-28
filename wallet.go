@@ -74,12 +74,10 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 		if err != nil {
 			return nil, fmt.Errorf("connect to themis %s", conf.Wallet.L1Geth)
 		}
-		// todo(ericlee42): remove StateSubmitMpcAddr and don't disregard the error
 		for i := themis.CommonMpcAddr; i <= themis.BlobSubmitMpcAddr; i++ {
 			res, err := pos.LatestMpcInfo(ctx, i)
-			if err != nil {
-				slog.Error("failed to get mpc address", "addr", i.String(), "err", err)
-				continue
+			if err != nil && i != themis.BlobSubmitMpcAddr {
+				return nil, fmt.Errorf("get mpc address %s: %w", i, err)
 			}
 
 			if _, ok := l1Wallets[i.String()]; ok {
@@ -89,16 +87,13 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 			case themis.CommonMpcAddr:
 				l1Wallets[i.String()] = res.Address
 				l2Wallets[i.String()] = res.Address
-			case themis.StateSubmitMpcAddr, themis.RewardSubmitMpcAddr, themis.BlobSubmitMpcAddr:
+			case themis.StateSubmitMpcAddr, themis.RewardSubmitMpcAddr:
 				l1Wallets[i.String()] = res.Address
+			case themis.BlobSubmitMpcAddr:
+				l1Wallets[i.String()] = res.Address
+				delete(l1Wallets, themis.CommonMpcAddr.String())
 			}
 		}
-	}
-
-	// mpc address length is 3 at least
-	// todo: remove it
-	if len(l1Wallets)+len(l2Wallets) == len(conf.Wallet.Wallets)+len(conf.Wallet.L2Wallets) {
-		return nil, fmt.Errorf("no mpc wallet address found")
 	}
 
 	balance := prometheus.NewGaugeVec(prometheus.GaugeOpts{
