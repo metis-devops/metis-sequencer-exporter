@@ -179,7 +179,7 @@ func (m *WalletMetric) scrapeL2(basectx context.Context, failureCounter *prometh
 		case <-ticker.C:
 			var wg sync.WaitGroup
 			var start = time.Now()
-			for name, addr := range m.l1Wallets {
+			for name, addr := range m.l2Wallets {
 				wg.Add(1)
 				name, addr := name, addr
 				go func() {
@@ -242,7 +242,7 @@ func (m *WalletMetric) scrapeL1(basectx context.Context, failureCounter *prometh
 		case <-ticker.C:
 			var wg sync.WaitGroup
 			var start = time.Now()
-			for alias, addr := range m.l2Wallets {
+			for alias, addr := range m.l1Wallets {
 				wg.Add(1)
 				alias, addr := alias, addr
 				go func() {
