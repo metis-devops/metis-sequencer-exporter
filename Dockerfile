@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.23.6-alpine AS builder
+FROM golang:1.24-alpine AS builder
 RUN apk add --no-cache make gcc musl-dev linux-headers git ca-certificates
 WORKDIR /app
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go install .
 
-FROM alpine:3.21
+FROM alpine:latest
 RUN apk add --no-cache curl
 COPY --from=builder /go/bin/* /usr/local/bin/
 EXPOSE 9090
