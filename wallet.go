@@ -97,7 +97,7 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 
 	// mpc address length is 3 at least
 	// todo: remove it
-	if len(l1Wallets) == len(conf.Wallet.Wallets)+len(conf.Wallet.L2Wallets)+3 {
+	if len(l1Wallets)+len(l2Wallets) == len(conf.Wallet.Wallets)+len(conf.Wallet.L2Wallets) {
 		return nil, fmt.Errorf("no mpc wallet address found")
 	}
 
