@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/ethereum/go-ethereum v1.15.7
-	github.com/prometheus/client_golang v1.21.0
+	github.com/prometheus/client_golang v1.21.1
 	github.com/shopspring/decimal v1.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
