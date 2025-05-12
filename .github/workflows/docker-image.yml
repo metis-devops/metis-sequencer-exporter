@@ -26,7 +26,7 @@ jobs:
           username: metisdao
           password: ${{ secrets.METIS_DOCKER_ACCESS_KEY  }}
 
-      - name: Docker meta for reward submitter
+      - name: Docker meta
         id: docker-meta
         uses: docker/metadata-action@v5
         with:
