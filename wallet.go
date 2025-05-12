@@ -81,13 +81,16 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 			}
 
 			if _, ok := l1Wallets[i.String()]; ok {
-				return nil, fmt.Errorf("custom wallet is duplicated with mpc address %s", i)
+				return nil, fmt.Errorf("custom L1 wallet is duplicated with mpc address %s", i)
 			}
-			switch i {
-			case themis.CommonMpcAddr:
+
+			if i == themis.CommonMpcAddr {
 				l1Wallets[i.String()] = res.Address
 				l2Wallets[i.String()] = res.Address
-			case themis.StateSubmitMpcAddr, themis.RewardSubmitMpcAddr, themis.BlobSubmitMpcAddr:
+				if _, ok := l2Wallets[i.String()]; ok {
+					return nil, fmt.Errorf("custom L2 wallet is duplicated with mpc address %s", i)
+				}
+			} else {
 				l1Wallets[i.String()] = res.Address
 			}
 		}
