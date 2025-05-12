@@ -87,11 +87,8 @@ func NewWalletMetric(basectx context.Context, reg prometheus.Registerer, conf *c
 			case themis.CommonMpcAddr:
 				l1Wallets[i.String()] = res.Address
 				l2Wallets[i.String()] = res.Address
-			case themis.StateSubmitMpcAddr, themis.RewardSubmitMpcAddr:
+			case themis.StateSubmitMpcAddr, themis.RewardSubmitMpcAddr, themis.BlobSubmitMpcAddr:
 				l1Wallets[i.String()] = res.Address
-			case themis.BlobSubmitMpcAddr:
-				l1Wallets[i.String()] = res.Address
-				delete(l1Wallets, themis.CommonMpcAddr.String())
 			}
 		}
 	}
