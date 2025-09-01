@@ -3,7 +3,7 @@ module github.com/metis-devops/metis-sequencer-exporter
 go 1.24
 
 require (
-	github.com/ethereum/go-ethereum v1.16.1
+	github.com/ethereum/go-ethereum v1.16.2
 	github.com/prometheus/client_golang v1.23.0
 	github.com/shopspring/decimal v1.4.0
 	gopkg.in/yaml.v3 v3.0.1
