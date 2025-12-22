@@ -86,7 +86,7 @@ func TestClient_LatestMpcInfo(t *testing.T) {
 						t.Errorf("can't read test file: %s", err)
 						return
 					}
-					defer jsonResp.Close()
+					defer jsonResp.Close() //nolint:errcheck
 					_, _ = io.Copy(w, jsonResp)
 				}
 			}))
@@ -166,7 +166,7 @@ func TestClient_GetMpcSign(t *testing.T) {
 						t.Errorf("can't read test file: %s", err)
 						return
 					}
-					defer jsonResp.Close()
+					defer jsonResp.Close() //nolint:errcheck
 					_, _ = io.Copy(w, jsonResp)
 				}
 			}))

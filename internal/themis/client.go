@@ -52,7 +52,7 @@ func (c *Client) Get(ctx context.Context, path string, result any) (int64, error
 	if err != nil {
 		return 0, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode == http.StatusOK {
 		var data ResponseWithHeight
@@ -90,7 +90,7 @@ func (c *Client) Post(ctx context.Context, path string, req, result any) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode == http.StatusOK {
 		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
